@@ -172,7 +172,7 @@ public class MiWebService : System.Web.Services.WebService
         if (miConexionSQL.State == System.Data.ConnectionState.Open)
         {
             MySqlCommand query = new MySqlCommand
-                ("select libros.idLibro, libros.nombreLibro, autores.nombreAutor, autores.apellidoAutor, libros.genero, libros. editorial, libros.`añoPublicacion`, libros.sinopsis, libros.autorEnsayo, libros.ensayo, libros.portada from libros, autores, autorlibro where libros.idLibro = autorlibro.idLibro and autorlibro.idAutor = autores.idAutor and libros.idLibro =" + idLibro_set + ";", miConexionSQL);
+                ("select libros.idLibro, libros.nombreLibro, libros.linkCompra, autores.nombreAutor, autores.apellidoAutor, libros.genero, libros. editorial, libros.`añoPublicacion`, libros.sinopsis, libros.autorEnsayo, libros.ensayo, libros.portada from libros, autores, autorlibro where libros.idLibro = autorlibro.idLibro and autorlibro.idAutor = autores.idAutor and libros.idLibro =" + idLibro_set + ";", miConexionSQL);
             query.CommandType = System.Data.CommandType.Text;
             query.CommandTimeout = 120;
             MySqlDataReader reader = null;
@@ -208,6 +208,7 @@ public class MiWebService : System.Web.Services.WebService
                 respuesta.AutorEnsayo = tabla.Rows[0]["autorEnsayo"].ToString();
                 respuesta.Ensayo = tabla.Rows[0]["ensayo"].ToString();
                 respuesta.Portada = tabla.Rows[0]["portada"].ToString();
+                respuesta.Compra = tabla.Rows[0]["linkCompra"].ToString();
 
                 //for para agregar mas autores a un libro en el caso de que este tenga mas de un autor.
                 if (tabla.Rows.Count > 1)
