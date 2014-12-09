@@ -187,7 +187,7 @@ public class MiWebService : System.Web.Services.WebService
 
     [WebMethod]
 
-    public string Buscarlibro(string busqueda)
+    public string BuscarLibro(string busqueda)
     {
         List<Libro> ListaDeLibros = new List<Libro>();
         MySqlConnection miConexionSQL = new MySqlConnection(Conexion.ObtenerCadenaConexion());
