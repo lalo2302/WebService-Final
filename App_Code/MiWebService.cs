@@ -24,11 +24,6 @@ public class MiWebService : System.Web.Services.WebService
     //}
 
     [WebMethod]
-    public string HelloWorld()
-    {
-        return "Hello World";
-    }
-    [WebMethod]
     public string ObtenerComentarios(string idLibro_comentario)
     {
         List<Comentario> ListaDeComentarios = new List<Comentario>();
