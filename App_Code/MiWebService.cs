@@ -107,59 +107,57 @@ public class MiWebService : System.Web.Services.WebService
             if (tabla.Rows.Count > 0)
             {
                 Libro libro = null;
-
-                for (int i = 0; i < tabla.Rows.Count; i++)
+                var trc = tabla.Rows.Count;
+                var tr = tabla.Rows;
+                bool flag = false;
+                string idtemp = "idtemp";
+                for (int j = 1; j <= trc; j++)
                 {
-                    if (i > 2 && i < tabla.Rows.Count - 2)
+                    for (int i = 0; i < trc - j; i++)
                     {
-                        if (tabla.Rows[i]["idLibro"].ToString() == tabla.Rows[i + 1]["idLibro"].ToString())
+
+                        if (tr[i]["idLibro"].ToString() == tr[trc - j]["idLibro"].ToString())
                         {
                             libro = new Libro();
-                            libro.genero = tabla.Rows[i]["genero"].ToString();
-                            libro.idLibro = int.Parse(tabla.Rows[i]["idLibro"].ToString());
-                            libro.nombreLibro = tabla.Rows[i]["nombreLibro"].ToString();
-                            libro.portada = tabla.Rows[i]["portada"].ToString();
-                            libro.autorEnsayo = tabla.Rows[i]["autorEnsayo"].ToString();
-                            libro.autorLibro = tabla.Rows[i]["nombreAutor"].ToString() + " " + tabla.Rows[i]["apellidoAutor"].ToString() + ", " + tabla.Rows[i + 1]["nombreAutor"].ToString() + " " + tabla.Rows[i + 1]["apellidoAutor"].ToString();
+                            libro.genero = tr[trc - j]["genero"].ToString();
+                            libro.idLibro = int.Parse(tr[trc - j]["idLibro"].ToString());
+                            libro.nombreLibro = tr[trc - j]["nombreLibro"].ToString();
+                            libro.portada = tr[trc - j]["portada"].ToString();
+                            libro.autorEnsayo = tr[trc - j]["autorEnsayo"].ToString();
+                            libro.autorLibro = tr[trc - j]["nombreAutor"].ToString() + " " + tr[trc - j]["apellidoAutor"].ToString() + ", " + tr[i]["nombreAutor"].ToString() + " " + tr[i]["apellidoAutor"].ToString();
 
                             ListaDeLibros.Add(libro);
+                            flag = true;
+                            idtemp = tr[i]["idLibro"].ToString();
                         }
-                        else if (tabla.Rows[i]["idLibro"].ToString() == tabla.Rows[i - 1]["idLibro"].ToString())
-                        {
-                            libro = null;
-                        }
-                        else
+                        else { flag = false; }
+
+                    }
+
+                    if (!flag)
+                    {
+                        if (tr[trc - j]["idLibro"].ToString() != idtemp)
                         {
                             libro = new Libro();
-                            libro.genero = tabla.Rows[i]["genero"].ToString();
-                            libro.idLibro = int.Parse(tabla.Rows[i]["idLibro"].ToString());
-                            libro.nombreLibro = tabla.Rows[i]["nombreLibro"].ToString();
-                            libro.portada = tabla.Rows[i]["portada"].ToString();
-                            libro.autorEnsayo = tabla.Rows[i]["autorEnsayo"].ToString();
-                            libro.autorLibro = tabla.Rows[i]["nombreAutor"].ToString() + " " + tabla.Rows[i]["apellidoAutor"].ToString();
+                            libro.genero = tr[trc - j]["genero"].ToString();
+                            libro.idLibro = int.Parse(tr[trc - j]["idLibro"].ToString());
+                            libro.nombreLibro = tr[trc - j]["nombreLibro"].ToString();
+                            libro.portada = tr[trc - j]["portada"].ToString();
+                            libro.autorEnsayo = tr[trc - j]["autorEnsayo"].ToString();
+                            libro.autorLibro = tr[trc - j]["nombreAutor"].ToString() + " " + tr[trc - j]["apellidoAutor"].ToString();
 
                             ListaDeLibros.Add(libro);
                         }
                     }
-                    else
-                    {
-                        libro = new Libro();
-                        libro.genero = tabla.Rows[i]["genero"].ToString();
-                        libro.idLibro = int.Parse(tabla.Rows[i]["idLibro"].ToString());
-                        libro.nombreLibro = tabla.Rows[i]["nombreLibro"].ToString();
-                        libro.portada = tabla.Rows[i]["portada"].ToString();
-                        libro.autorEnsayo = tabla.Rows[i]["autorEnsayo"].ToString();
-                        libro.autorLibro = tabla.Rows[i]["nombreAutor"].ToString() + " " + tabla.Rows[i]["apellidoAutor"].ToString();
 
-                        ListaDeLibros.Add(libro);
-                    }
                 }
+                ListaDeLibros = ListaDeLibros.OrderBy(x => x.nombreLibro).ToList();
+                string json = JsonConvert.SerializeObject(ListaDeLibros);
+
+                return json;
             }
         }
-        ListaDeLibros = ListaDeLibros.OrderBy(x => x.nombreLibro).ToList();
-        string json = JsonConvert.SerializeObject(ListaDeLibros);
-
-        return json;
+        return null;
     }
 
     [WebMethod]
@@ -269,7 +267,7 @@ public class MiWebService : System.Web.Services.WebService
                 var tr = tabla.Rows;
                 bool flag = false;
                 string idtemp = "idtemp";
-                for (int j = 1; j < trc; j++)
+                for (int j = 1; j <= trc; j++)
                 {
                     for (int i = 0; i < trc - j; i++)
                     {
