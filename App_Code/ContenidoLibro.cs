@@ -24,4 +24,5 @@ public class ContenidoLibro
     public string AutorEnsayo { set; get; }
     public string Ensayo { set; get; }
     public string Portada { set; get; }
+    public string Compra { set; get; }
 }
