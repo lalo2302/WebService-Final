@@ -187,19 +187,21 @@ public class MiWebService : System.Web.Services.WebService
 
     [WebMethod]
 
-    public ContenidoLibro Buscarlibro(string busqueda)
+    public string Buscarlibro(string busqueda)
     {
+        List<Libro> ListaDeLibros = new List<Libro>();
         MySqlConnection miConexionSQL = new MySqlConnection(Conexion.ObtenerCadenaConexion());
+
         if (miConexionSQL.State == System.Data.ConnectionState.Closed)
             miConexionSQL.Open();
         if (miConexionSQL.State == System.Data.ConnectionState.Open)
         {
-            MySqlCommand query = new MySqlCommand
-                ("SELECT * from (select libros.idLibro, libros.nombreLibro, libros.portada, libros.autorEnsayo, libros.genero, autores.nombreAutor, autores.apellidoAutor from libros, autores, autorlibro where libros.nombreLibro LIKE '%" + busqueda + "%' and autorlibro.idLibro = libros.idLibro and autorlibro.idAutor = autores.idAutor UNION select libros.idLibro, libros.nombreLibro, libros.portada, libros.autorEnsayo,  libros.genero, autores.nombreAutor, autores.apellidoAutor from libros, autores, autorlibro where autores.nombreAutor  LIKE '%" + busqueda + "%' and autorlibro.idLibro = libros.idLibro and autorlibro.idAutor = autores.idAutor  UNION select libros.idLibro, libros.nombreLibro, libros.portada, libros.autorEnsayo, libros.genero, autores.nombreAutor,  autores.apellidoAutor from libros, autores, autorlibro where autores.apellidoAutor LIKE '%" + busqueda + "%' and autorlibro.idLibro = libros.idLibro  and autorlibro.idAutor = autores.idAutor UNION select libros.idLibro, libros.nombreLibro, libros.portada, libros.autorEnsayo, libros.genero, autores.nombreAutor,  autores.apellidoAutor from libros, autores, autorlibro where libros.autorEnsayo LIKE '%" + busqueda +"%' and autorlibro.idLibro = libros.idLibro  and autorlibro.idAutor = autores.idAutor) a order by idLibro", miConexionSQL);
+
+            MySqlCommand query = new MySqlCommand("SELECT * from (select libros.idLibro, libros.nombreLibro, libros.portada, libros.autorEnsayo, libros.genero, autores.nombreAutor, autores.apellidoAutor from libros, autores, autorlibro where libros.nombreLibro LIKE '%" + busqueda + "%' and autorlibro.idLibro = libros.idLibro and autorlibro.idAutor = autores.idAutor UNION select libros.idLibro, libros.nombreLibro, libros.portada, libros.autorEnsayo,  libros.genero, autores.nombreAutor, autores.apellidoAutor from libros, autores, autorlibro where autores.nombreAutor  LIKE '%" + busqueda + "%' and autorlibro.idLibro = libros.idLibro and autorlibro.idAutor = autores.idAutor  UNION select libros.idLibro, libros.nombreLibro, libros.portada, libros.autorEnsayo, libros.genero, autores.nombreAutor,  autores.apellidoAutor from libros, autores, autorlibro where autores.apellidoAutor LIKE '%" + busqueda + "%' and autorlibro.idLibro = libros.idLibro  and autorlibro.idAutor = autores.idAutor UNION select libros.idLibro, libros.nombreLibro, libros.portada, libros.autorEnsayo, libros.genero, autores.nombreAutor,  autores.apellidoAutor from libros, autores, autorlibro where libros.autorEnsayo LIKE '%" + busqueda + "%' and autorlibro.idLibro = libros.idLibro  and autorlibro.idAutor = autores.idAutor) a order by idLibro", miConexionSQL);
             query.CommandType = System.Data.CommandType.Text;
-            query.CommandTimeout = 120;
+            query.CommandTimeout = 120; //120 segundos
             MySqlDataReader reader = null;
-            DataTable tabla = new DataTable();
+            DataTable tabla = new DataTable(); //Tabla para almacenar los datos temporales
 
             /*DataTable toma la primera columna de la tabla como primary key por defecto, asi que no van a salir libros
             repetidos porque el idLibro no se puede repetir. El libro que tiene dos autores necesitamos que salga dos veces
@@ -210,42 +212,71 @@ public class MiWebService : System.Web.Services.WebService
             tabla.PrimaryKey = new DataColumn[1] { tabla.Columns["PK"] }; //asignar nueva columna como primary key
             tabla.Columns["PK"].AutoIncrement = true; //autoincrement en nueva columna
 
-
-            query.Prepare();
-            reader = query.ExecuteReader();
-            tabla.Load(reader);
-            reader.Close();
-            query.Dispose();
+            query.Prepare();//Inicializamos el comando
+            reader = query.ExecuteReader();//Alamcenamos los datos en el lector para despues pasarlos al DataTable
+            tabla.Load(reader);//Cargamos los datos del lector de la tabla
+            reader.Close();//Siempre cerrar el lector
+            query.Dispose();//Destruir siempre comando MySQl una vez usado
             miConexionSQL.Close();
+
+
 
             if (tabla.Rows.Count > 0)
             {
-                ContenidoLibro respuesta = new ContenidoLibro();
-                respuesta.IDLibro = tabla.Rows[0]["idLibro"].ToString();
-                respuesta.Titulo = tabla.Rows[0]["nombreLibro"].ToString();
-                respuesta.Autor = tabla.Rows[0]["nombreAutor"].ToString() + " " + tabla.Rows[0]["apellidoAutor"].ToString();
-                respuesta.Genero = tabla.Rows[0]["genero"].ToString();
-                respuesta.Editorial = tabla.Rows[0]["editorial"].ToString();
-                respuesta.Publicacion = tabla.Rows[0]["añoPublicacion"].ToString();
-                respuesta.Sinopsis = tabla.Rows[0]["sinopsis"].ToString();
-                respuesta.AutorEnsayo = tabla.Rows[0]["autorEnsayo"].ToString();
-                respuesta.Ensayo = tabla.Rows[0]["ensayo"].ToString();
-                respuesta.Portada = tabla.Rows[0]["portada"].ToString();
+                Libro libro = null;
 
-                //for para agregar mas autores a un libro en el caso de que este tenga mas de un autor.
-                if (tabla.Rows.Count > 1)
+                for (int i = 0; i < tabla.Rows.Count; i++)
                 {
-                    for (int i = 1; i < tabla.Rows.Count; i++)
+                    if (i > 2 && i < tabla.Rows.Count - 2)
                     {
-                        respuesta.Autor += ", " + tabla.Rows[i]["nombreAutor"].ToString() + " " + tabla.Rows[i]["apellidoAutor"].ToString();
+                        if (tabla.Rows[i]["idLibro"].ToString() == tabla.Rows[i + 1]["idLibro"].ToString())
+                        {
+                            libro = new Libro();
+                            libro.genero = tabla.Rows[i]["genero"].ToString();
+                            libro.idLibro = int.Parse(tabla.Rows[i]["idLibro"].ToString());
+                            libro.nombreLibro = tabla.Rows[i]["nombreLibro"].ToString();
+                            libro.portada = tabla.Rows[i]["portada"].ToString();
+                            libro.autorEnsayo = tabla.Rows[i]["autorEnsayo"].ToString();
+                            libro.autorLibro = tabla.Rows[i]["nombreAutor"].ToString() + " " + tabla.Rows[i]["apellidoAutor"].ToString() + ", " + tabla.Rows[i + 1]["nombreAutor"].ToString() + " " + tabla.Rows[i + 1]["apellidoAutor"].ToString();
+
+                            ListaDeLibros.Add(libro);
+                        }
+                        else if (tabla.Rows[i]["idLibro"].ToString() == tabla.Rows[i - 1]["idLibro"].ToString())
+                        {
+                            libro = null;
+                        }
+                        else
+                        {
+                            libro = new Libro();
+                            libro.genero = tabla.Rows[i]["genero"].ToString();
+                            libro.idLibro = int.Parse(tabla.Rows[i]["idLibro"].ToString());
+                            libro.nombreLibro = tabla.Rows[i]["nombreLibro"].ToString();
+                            libro.portada = tabla.Rows[i]["portada"].ToString();
+                            libro.autorEnsayo = tabla.Rows[i]["autorEnsayo"].ToString();
+                            libro.autorLibro = tabla.Rows[i]["nombreAutor"].ToString() + " " + tabla.Rows[i]["apellidoAutor"].ToString();
+
+                            ListaDeLibros.Add(libro);
+                        }
+                    }
+                    else
+                    {
+                        libro = new Libro();
+                        libro.genero = tabla.Rows[i]["genero"].ToString();
+                        libro.idLibro = int.Parse(tabla.Rows[i]["idLibro"].ToString());
+                        libro.nombreLibro = tabla.Rows[i]["nombreLibro"].ToString();
+                        libro.portada = tabla.Rows[i]["portada"].ToString();
+                        libro.autorEnsayo = tabla.Rows[i]["autorEnsayo"].ToString();
+                        libro.autorLibro = tabla.Rows[i]["nombreAutor"].ToString() + " " + tabla.Rows[i]["apellidoAutor"].ToString();
+
+                        ListaDeLibros.Add(libro);
                     }
                 }
-
-                return respuesta;
             }
         }
+        ListaDeLibros = ListaDeLibros.OrderBy(x => x.nombreLibro).ToList();
+        string json = JsonConvert.SerializeObject(ListaDeLibros);
 
-        return null;
+        return json;
     }
 
 
