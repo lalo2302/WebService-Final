@@ -28,7 +28,47 @@ public class MiWebService : System.Web.Services.WebService
     {
         return "Hello World";
     }
+    [WebMethod]
+    public string ObtenerComentarios(string idLibro_comentario)
+    {
+        List<Comentario> ListaDeComentarios = new List<Comentario>();
+        MySqlConnection miConexionSQL = new MySqlConnection(Conexion.ObtenerCadenaConexion());
+        if (miConexionSQL.State == System.Data.ConnectionState.Closed)
+            miConexionSQL.Open();
+        if (miConexionSQL.State == System.Data.ConnectionState.Open)
+        {
+            MySqlCommand query = new MySqlCommand
+                ("select * from comentarios where idLibro = '" + idLibro_comentario + "';", miConexionSQL);
+            query.CommandType = System.Data.CommandType.Text;
+            query.CommandTimeout = 120;
+            MySqlDataReader reader = null;
+            DataTable tabla = new DataTable();
+            query.Prepare();
+            reader = query.ExecuteReader();
+            tabla.Load(reader);
+            reader.Close();
+            query.Dispose();
+            miConexionSQL.Close();
 
+            if (tabla.Rows.Count > 0)
+            {
+                Comentario comentario = null;
+                for (int i = 0; i < tabla.Rows.Count; i++)
+                {
+                    comentario = new Comentario();
+                    comentario.idLibro = tabla.Rows[i]["idLibro"].ToString();
+                    comentario.Com = tabla.Rows[i]["comentario"].ToString();
+                    ListaDeComentarios.Add(comentario);
+                }
+                ListaDeComentarios = ListaDeComentarios.OrderBy(x => x.idLibro).ToList();
+                string json = JsonConvert.SerializeObject(ListaDeComentarios);
+
+                return json;
+            }
+            
+        }
+        return null;
+    }
     [WebMethod]
     public string ObtenerLibros()
     {
@@ -246,6 +286,31 @@ public class MiWebService : System.Web.Services.WebService
         }
 
         return null;
+    }
+
+    [WebMethod]
+    public bool GuardarComentario(string ObjetoJSONComentario)
+    {
+        var resultado = JsonConvert.DeserializeObject<Comentario>(ObjetoJSONComentario);
+
+        MySqlConnection miConexionSQL = new MySqlConnection(Conexion.ObtenerCadenaConexion());
+        if (miConexionSQL.State == System.Data.ConnectionState.Closed)
+            miConexionSQL.Open();
+        if (miConexionSQL.State == System.Data.ConnectionState.Open)
+        {
+            MySqlCommand query = new MySqlCommand
+                ("INSERT INTO " +
+                "comentarios(idLibro,comentario)" +
+                "VALUES ('" + resultado.idLibro + "', " + "'" + resultado.Com + "');",
+            miConexionSQL);
+            query.CommandType = System.Data.CommandType.Text;
+            query.CommandTimeout = 120;
+            query.ExecuteNonQuery();
+            query.Dispose();
+            miConexionSQL.Close();
+        }
+
+        return true;
     }
 
 
